@@ -2,4 +2,3 @@ DAILY RED RESULTS
 One line per player per day, added automatically when a result is submitted from the game.
 
 DATE        DAY    PLAYER   GITHUB                  RESULT  TURNS  STANDING  RED DOWN
-2026-10-13  #1     TEST     @emanuelebermani        WIN     9      3/6       6/6
