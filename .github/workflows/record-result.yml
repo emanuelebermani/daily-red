@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   record:
-    if: startsWith(github.event.issue.title, 'Daily Red #')
+    if: "startsWith(github.event.issue.title, 'Daily Red #')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
