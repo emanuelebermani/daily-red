@@ -1,0 +1,54 @@
+name: Record a Daily Red result
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: results-file
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: startsWith(github.event.issue.title, 'Daily Red #')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add the result to results.txt
+        id: add
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_LOGIN: ${{ github.event.issue.user.login }}
+        run: node .github/scripts/record-result.js
+
+      - name: Commit results.txt
+        if: steps.add.outputs.ok == 'true'
+        env:
+          ISSUE_LOGIN: ${{ github.event.issue.user.login }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results.txt
+          git commit -m "Add Daily Red result from @${ISSUE_LOGIN} (#${ISSUE_NUMBER})"
+          git push
+
+      - name: Reply and close the issue
+        uses: actions/github-script@v7
+        env:
+          OK: ${{ steps.add.outputs.ok }}
+          REASON: ${{ steps.add.outputs.reason }}
+          LINE: ${{ steps.add.outputs.line }}
+        with:
+          script: |
+            const ok = process.env.OK === 'true';
+            const body = ok
+              ? 'Recorded in results.txt:\n\n```text\n' + process.env.LINE + '\n```\n\nThanks for playing Daily Red!'
+              : 'This result was not recorded: ' + process.env.REASON;
+            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, state: 'closed', state_reason: ok ? 'completed' : 'not_planned' });

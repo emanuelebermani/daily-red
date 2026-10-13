@@ -1,0 +1,6 @@
+*.gba
+*.sav
+*.bin
+!vendor/gbajs/bios.bin
+dist/
+node_modules/

@@ -1,0 +1,322 @@
+<title>Daily Red</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Jersey+10&family=Silkscreen:wght@400;700&display=swap">
+<style>
+/* Layout: one screen app. The GBA screen sits in a dark bezel at the centre; today's team and Red's team sit beside it on wide screens and under it on phones. */
+:root {
+  --night: #0c111b;
+  --night-2: #131b2a;
+  --panel: #182234;
+  --line: #27344c;
+  --frost: #e4ebf5;
+  --mist: #8d9ab1;
+  --cap: #e23a3f;
+  --cap-deep: #a4232a;
+  --leaf: #5fc37a;
+  --display: "Jersey 10", "Silkscreen", ui-monospace, monospace;
+  --label: "Silkscreen", ui-monospace, "Courier New", monospace;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(120% 70% at 50% 0%, #17223a 0%, var(--night) 60%) fixed, var(--night);
+  color: var(--frost);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+header.top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.redpic { width: 64px; height: 64px; image-rendering: pixelated; flex: none; }
+.brand { display: flex; flex-direction: column; min-width: 0; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 54px;
+  line-height: 0.85;
+  letter-spacing: 1px;
+  text-wrap: balance;
+}
+.brand h1 b { color: var(--cap); font-weight: 400; }
+.brand .sub { font-family: var(--label); font-size: 11px; letter-spacing: 1.5px; color: var(--mist); text-transform: uppercase; }
+.record { margin-left: auto; display: flex; gap: 18px; font-family: var(--label); font-size: 11px; color: var(--mist); letter-spacing: 1px; }
+.record div { display: flex; flex-direction: column; align-items: flex-end; }
+.record strong { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; color: var(--frost); font-variant-numeric: tabular-nums; }
+
+.layout { display: grid; grid-template-columns: minmax(0, auto) minmax(280px, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 1080px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.play { display: flex; flex-direction: column; gap: 12px; align-items: center; min-width: 0; }
+.bezel {
+  position: relative;
+  background: linear-gradient(180deg, #2b2f3a, #1d2029);
+  border-radius: 14px 14px 40px 14px;
+  padding: 18px 22px 22px;
+  box-shadow: 0 1px 0 #3c4150 inset, 0 18px 40px rgba(0, 0, 0, 0.45);
+  max-width: 100%;
+}
+.bezel .label { position: absolute; left: 22px; top: 4px; font-family: var(--label); font-size: 9px; letter-spacing: 2px; color: #6d7487; }
+.bezel .led { position: absolute; left: 8px; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #3a3f4c; }
+.bezel .led.on { background: var(--leaf); box-shadow: 0 0 8px var(--leaf); }
+.screen {
+  position: relative;
+  width: var(--sw, 720px);
+  max-width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #000;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.screen canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 18px; text-align: center;
+  justify-content: safe center; overflow-y: auto;
+  background: rgba(9, 13, 21, 0.94);
+}
+.overlay h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 0.9; }
+.overlay p { margin: 0; max-width: 44ch; color: var(--mist); font-size: 14px; }
+.overlay p strong { color: var(--frost); }
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; align-items: center; transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--cap); background: rgba(226, 58, 63, 0.08); }
+.err { color: #ff8a8d !important; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+button, .btn {
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--frost);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+button:hover, .btn:hover { border-color: #3b4c6c; }
+button:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--cap); outline-offset: 2px; }
+button.primary { background: var(--cap); border-color: var(--cap); color: #fff; font-size: 14px; padding: 11px 22px; }
+button.primary:hover { background: #f04449; }
+button[aria-pressed="true"] { border-color: var(--cap); color: #fff; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; }
+.seg button[aria-pressed="true"] { background: var(--cap); }
+input[type="text"] {
+  font-family: var(--label); font-size: 14px; letter-spacing: 1px; text-transform: uppercase;
+  background: var(--night); color: var(--frost); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; width: 10.5ch;
+}
+.field { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-family: var(--label); font-size: 10px; letter-spacing: 1px; color: var(--mist); text-transform: uppercase; }
+.bar { width: min(260px, 70%); height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--cap); transition: width .1s linear; }
+
+.tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tools button { font-size: 11px; padding: 7px 11px; }
+.hint { font-family: var(--label); font-size: 10px; letter-spacing: 1px; color: var(--mist); text-align: center; text-transform: uppercase; }
+.hint kbd { font-family: var(--label); color: var(--frost); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+
+/* touch controls */
+.pad { display: none; width: min(520px, 100%); grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; user-select: none; -webkit-user-select: none; touch-action: none; }
+.pad.show { display: grid; }
+.dpad { width: 132px; height: 132px; position: relative; touch-action: none; }
+.dpad::before, .dpad::after { content: ""; position: absolute; background: #262b37; border-radius: 6px; box-shadow: 0 3px 0 #11141b; }
+.dpad::before { left: 44px; top: 0; width: 44px; height: 132px; }
+.dpad::after { left: 0; top: 44px; width: 132px; height: 44px; }
+.dpad .arrow { position: absolute; z-index: 1; width: 0; height: 0; border: 8px solid transparent; opacity: .55; }
+.dpad .up { left: 58px; top: 12px; border-bottom-color: var(--frost); }
+.dpad .down { left: 58px; bottom: 12px; border-top-color: var(--frost); }
+.dpad .left { top: 58px; left: 12px; border-right-color: var(--frost); }
+.dpad .right { top: 58px; right: 12px; border-left-color: var(--frost); }
+.mid { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.pill { width: 66px; height: 22px; border-radius: 11px; background: #262b37; border: 0; font-size: 9px; padding: 0; box-shadow: 0 2px 0 #11141b; touch-action: none; }
+.ab { justify-self: end; position: relative; width: 150px; height: 120px; touch-action: none; }
+.ab button { position: absolute; width: 62px; height: 62px; border-radius: 50%; background: #8f2329; border: 0; font-family: var(--display); font-size: 26px; box-shadow: 0 4px 0 #4f1418; touch-action: none; }
+.ab .a { right: 0; top: 4px; }
+.ab .b { left: 6px; bottom: 4px; }
+.pad .held, .ab button.held, .pill.held { filter: brightness(1.4); transform: translateY(2px); }
+
+/* side panels */
+aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--night-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.card h3 { margin: 0; font-family: var(--label); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--mist); font-weight: 400; display: flex; justify-content: space-between; gap: 8px; }
+.mons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 1080px) { .mons { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .mons { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mon { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 2px 8px; align-items: center; padding: 6px; border-radius: 8px; background: var(--panel); }
+.mon canvas { width: 48px; height: 48px; image-rendering: pixelated; grid-row: span 2; }
+.mon .nm { font-family: var(--label); font-size: 11px; letter-spacing: .5px; overflow-wrap: anywhere; }
+.types { display: flex; gap: 4px; flex-wrap: wrap; }
+.type { font-family: var(--label); font-size: 8px; letter-spacing: .5px; padding: 1px 5px; border-radius: 3px; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.mon ul { grid-column: 1 / -1; margin: 4px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-family: var(--label); font-size: 9px; color: var(--mist); letter-spacing: .3px; }
+.mon .meta { grid-column: 1 / -1; font-size: 11px; color: var(--mist); }
+.redrow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.redrow .r { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--label); font-size: 8px; color: var(--mist); min-width: 0; }
+.redrow canvas { width: 100%; max-width: 56px; aspect-ratio: 1; image-rendering: pixelated; }
+.note { font-size: 13px; color: var(--mist); margin: 0; }
+a { color: var(--frost); }
+a.board { text-decoration: none; border-color: var(--cap); color: #fff; }
+a.board:hover { background: var(--cap-deep); }
+.share { width: 100%; max-width: 340px; font-family: var(--label); font-size: 11px; background: var(--night); color: var(--frost); border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: none; text-align: left; line-height: 1.6; }
+.stat { display: flex; gap: 18px; font-family: var(--label); font-size: 10px; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; justify-content: center; flex-wrap: wrap; }
+.stat strong { display: block; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--frost); }
+footer { font-size: 12px; color: var(--mist); display: flex; flex-direction: column; gap: 4px; }
+footer p { margin: 0; max-width: 90ch; }
+@media (max-width: 520px) {
+  .brand h1 { font-size: 44px; }
+  .bezel { padding: 12px 8px 14px; border-radius: 10px 10px 26px 10px; }
+  .bezel .label, .bezel .led { display: none; }
+  .overlay h2 { font-size: 28px; }
+  .overlay { padding: 10px; gap: 7px; }
+  .overlay p { font-size: 11.5px; line-height: 1.35; }
+  .drop { padding: 10px 14px; gap: 6px; }
+  .stat strong { font-size: 26px; }
+  a { color: var(--frost); }
+a.board { text-decoration: none; border-color: var(--cap); color: #fff; }
+a.board:hover { background: var(--cap-deep); }
+.share { font-size: 10px; padding: 6px 8px; }
+  .overlay .hint { font-size: 9px; }
+  .record { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <canvas class="redpic" id="redpic" width="64" height="64" aria-hidden="true"></canvas>
+    <div class="brand">
+      <h1>DAILY <b>RED</b></h1>
+      <span class="sub" id="dayline">Mt. Silver summit</span>
+    </div>
+    <div class="record" aria-label="Your record">
+      <div>Streak<strong id="streak">0</strong></div>
+      <div>Wins<strong id="wins">0</strong></div>
+      <div>Played<strong id="played">0</strong></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="play" aria-label="Game">
+      <div class="bezel">
+        <span class="label">MT. SILVER · SUMMIT</span>
+        <span class="led" id="led"></span>
+        <div class="screen" id="screen">
+          <canvas id="gba" width="240" height="160" aria-label="Game screen"></canvas>
+
+          <div class="overlay" id="romPanel">
+            <h2>Load your Emerald ROM</h2>
+            <p>Daily Red runs the real game from your own copy of <strong>Pokémon Emerald (USA/Europe)</strong>. The file never leaves this browser, and it is remembered for tomorrow.</p>
+            <label class="drop" id="drop">
+              <span class="hint">Drop the .gba file here</span>
+              <span class="btn">Choose file</span>
+              <input type="file" id="romInput" accept=".gba,.bin,application/octet-stream" hidden>
+            </label>
+            <p id="romMsg" role="status"></p>
+          </div>
+
+          <div class="overlay" id="startPanel" hidden>
+            <h2 id="startTitle">Red is waiting</h2>
+            <p id="startNote">Six fully evolved Pokémon at level 100, no type repeated. Red brings his original six, also at level 100.</p>
+            <div class="row">
+              <label class="field" for="nameInput">Your name
+                <input type="text" id="nameInput" maxlength="7" autocomplete="off" spellcheck="false">
+              </label>
+              <div class="field">Play as
+                <div class="seg" role="group" aria-label="Play as">
+                  <button type="button" id="boyBtn" aria-pressed="true">Brendan</button>
+                  <button type="button" id="girlBtn" aria-pressed="false">May</button>
+                </div>
+              </div>
+            </div>
+            <button class="primary" id="startBtn" type="button">Climb to the summit</button>
+            <a class="btn board" id="startSubmit" target="_blank" rel="noopener" hidden>Add today's result to the leaderboard</a>
+            <p class="hint" id="startHint">Sound starts when you press the button</p>
+          </div>
+
+          <div class="overlay" id="bootPanel" hidden>
+            <h2>Climbing…</h2>
+            <div class="bar"><i id="bootBar"></i></div>
+            <p id="bootMsg">Patching Red into the summit and loading today's team.</p>
+          </div>
+
+          <div class="overlay" id="resultPanel" hidden>
+            <h2 id="resTitle">Red fell silent</h2>
+            <div class="stat" id="resStats"></div>
+            <textarea class="share" id="shareText" rows="4" readonly aria-label="Shareable result"></textarea>
+            <div class="row">
+              <button class="primary" id="copyBtn" type="button">Copy result</button>
+              <button type="button" id="keepBtn">Back to the game</button>
+              <button type="button" id="againBtn">Restart</button>
+            </div>
+            <a class="btn board" id="submitLink" target="_blank" rel="noopener" hidden>Add my result to the leaderboard</a>
+            <p class="hint" id="resNote"></p>
+          </div>
+
+          <div class="overlay" id="pausePanel" hidden>
+            <h2>Paused</h2>
+            <button class="primary" id="resumeBtn" type="button">Resume</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tools" id="tools" hidden>
+        <button type="button" id="soundBtn" aria-pressed="true">Sound on</button>
+        <button type="button" id="fastBtn" aria-pressed="false">Fast forward</button>
+        <button type="button" id="padBtn" aria-pressed="false">Touch controls</button>
+        <button type="button" id="restartBtn">Restart</button>
+      </div>
+
+      <div class="pad" id="pad" aria-label="Touch controls">
+        <div class="dpad" id="dpad"><span class="arrow up"></span><span class="arrow down"></span><span class="arrow left"></span><span class="arrow right"></span></div>
+        <div class="mid">
+          <button class="pill" data-key="SELECT" type="button">Select</button>
+          <button class="pill" data-key="START" type="button">Start</button>
+        </div>
+        <div class="ab">
+          <button class="b" data-key="B" type="button">B</button>
+          <button class="a" data-key="A" type="button">A</button>
+        </div>
+      </div>
+
+      <p class="hint" id="keysHint"><kbd>Arrows</kbd> move · <kbd>Z</kbd> A · <kbd>X</kbd> B · <kbd>Enter</kbd> Start · <kbd>Shift</kbd> Select · hold <kbd>Space</kbd> to fast forward</p>
+    </section>
+
+    <aside>
+      <section class="card" aria-labelledby="teamH">
+        <h3 id="teamH"><span>Your team today</span><span id="teamDate"></span></h3>
+        <div class="mons" id="team"><p class="note">Load your ROM to see today's six.</p></div>
+      </section>
+      <section class="card" aria-labelledby="redH">
+        <h3 id="redH"><span>Red</span><span>Lv. 100 · original moves</span></h3>
+        <div class="redrow" id="redTeam"></div>
+        <p class="note">Pikachu, Espeon, Snorlax, Venusaur, Charizard and Blastoise with the moves they used on Mt. Silver in Gold and Silver.</p>
+      </section>
+      <footer>
+        <p>Your first finished battle each day counts toward your record. Lose and you wake up at the start of the summit to try again for practice.</p>
+        <p id="boardLine" hidden>Everyone's results are collected in <a id="boardLink" target="_blank" rel="noopener">results.txt on GitHub</a>. Adding yours opens a prefilled GitHub issue, so you need a free GitHub account.</p>
+        <p>GBA emulation by gbajs, © 2012 Jeffrey Pfau, used under its BSD license. Game data and graphics come from the ROM you load.</p>
+      </footer>
+    </aside>
+  </div>
+</div>
