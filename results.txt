@@ -1,4 +1,4 @@
 DAILY RED RESULTS
 One line per player per day, added automatically when a result is submitted from the game.
 
-DATE        DAY    PLAYER   GITHUB                  RESULT  TURNS  STANDING  RED DOWN
+DATE        DAY    PLAYER   GITHUB                  RESULT  TURNS  STANDING  RED DOWN  REROLLS

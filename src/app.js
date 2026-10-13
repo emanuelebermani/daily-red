@@ -48,7 +48,14 @@
   const dayNo = C.dayNumber(today);
   const prettyDate = new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   $('dayline').textContent = 'Challenge #' + dayNo + ' · ' + prettyDate;
-  $('teamDate').textContent = '#' + dayNo;
+
+  // ---------- rerolls (each one is seeded from the date, so reroll N is the same team for everyone) ----------
+  const MAX_REROLLS = 5;
+  function rerollsUsed() { return store.get('rerolls', {})[today] || 0; }
+  function teamSeed(n) { return n ? today + '|reroll' + n : today; }
+  function rerollLabel(n) { return n ? ' · ' + n + (n === 1 ? ' reroll' : ' rerolls') : ''; }
+  function renderTeamDate() { $('teamDate').textContent = '#' + dayNo + rerollLabel(rerollsUsed()); }
+  renderTeamDate();
 
   // ---------- leaderboard (GitHub issue that a workflow turns into a line of results.txt) ----------
   function submitUrl(rec, date) {
@@ -66,6 +73,7 @@
       'turns: ' + rec.turns,
       'standing: ' + rec.standing,
       'red_down: ' + Math.min(6, rec.redDown),
+      'rerolls: ' + (rec.rerolls || 0),
       'team: ' + (rec.team || []).join(', '),
       '```',
     ].join('\n');
@@ -210,7 +218,7 @@
       return false;
     }
     rom = C.parseRom(u8);
-    team = C.makeTeam(rom, today, { otId: otIdFor(today) });
+    team = C.makeTeam(rom, teamSeed(rerollsUsed()), { otId: otIdFor(today) });
     patched = C.patchRom(rom, {});
     renderTeam();
     if (!fromCache) { try { await idbPut('emerald', u8.buffer); } catch (e) { /* not remembered */ } }
@@ -258,9 +266,29 @@
     const sub = $('startSubmit');
     sub.hidden = !(REPO && done && done.name);
     if (!sub.hidden) sub.href = submitUrl(done, today);
+    renderReroll();
     show('startPanel');
   }
   $('startBtn').addEventListener('click', () => startGame());
+
+  // Rerolls happen before climbing, and lock once today's first battle is finished,
+  // since that result belongs to the team it was played with.
+  function canReroll() { return !!rom && !running && !booting && !store.get('history', {})[today]; }
+  function renderReroll() {
+    const left = MAX_REROLLS - rerollsUsed();
+    $('reroll').hidden = !canReroll();
+    $('rerollBtn').disabled = left <= 0;
+    $('rerollNote').textContent = left > 0 ? left + ' of ' + MAX_REROLLS + ' rerolls left today' : 'No rerolls left today';
+    renderTeamDate();
+  }
+  $('rerollBtn').addEventListener('click', () => {
+    const n = rerollsUsed() + 1;
+    if (!canReroll() || n > MAX_REROLLS) return;
+    store.set('rerolls', { [today]: n });
+    team = C.makeTeam(rom, teamSeed(n), { otId: otIdFor(today) });
+    renderTeam();
+    renderReroll();
+  });
 
   // ---------- boot ----------
   function player() {
@@ -272,6 +300,7 @@
   async function startGame() {
     try { if (gba.audio.context && gba.audio.context.state !== 'running') gba.audio.context.resume(); } catch (e) { /* audio blocked */ }
     running = false;
+    booting = true; renderReroll();
     show('bootPanel');
     $('bootBar').style.width = '0%';
     $('bootMsg').textContent = "Patching Red into the summit and loading today's team.";
@@ -352,7 +381,7 @@
     const hist = store.get('history', {});
     const official = !hist[today];
     const rec = { outcome: b.outcome, turns: b.turns, standing: b.standing.filter(Boolean).length, redDown: b.redFainted,
-      day: dayNo, name: player().name, team: team.map(m => m.name) };
+      day: dayNo, name: player().name, team: team.map(m => m.name), rerolls: rerollsUsed() };
     if (official) { hist[today] = rec; store.set('history', hist); renderRecord(); }
     const win = b.outcome === 1;
     $('resTitle').textContent = win ? 'Red fell silent' : 'Red stands firm';
@@ -364,7 +393,7 @@
     add("Red's team down", Math.min(6, b.redFainted) + '/6');
     const squares = b.standing.map(s => (s ? '\u{1F7E9}' : '⬛')).join('');
     const redSquares = Array.from({ length: 6 }, (_, i) => (i < b.redFainted ? '\u{1F534}' : '⚪')).join('');
-    const lines = ['Daily Red #' + dayNo + (official ? '' : ' (practice)'),
+    const lines = ['Daily Red #' + dayNo + rerollLabel(rec.rerolls) + (official ? '' : ' (practice)'),
       win ? 'Beat Red in ' + b.turns + ' turns' : 'Lost to Red after ' + b.turns + ' turns',
       'Me  ' + squares, 'Red ' + redSquares];
     $('shareText').value = lines.join('\n');

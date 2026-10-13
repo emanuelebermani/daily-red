@@ -120,6 +120,7 @@ button:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px sol
 button.primary { background: var(--cap); border-color: var(--cap); color: #fff; font-size: 14px; padding: 11px 22px; }
 button.primary:hover { background: #f04449; }
 button[aria-pressed="true"] { border-color: var(--cap); color: #fff; }
+button:disabled, button:disabled:hover { opacity: .45; cursor: default; border-color: var(--line); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; background: transparent; }
 .seg button[aria-pressed="true"] { background: var(--cap); }
@@ -175,6 +176,10 @@ aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .redrow .r { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--label); font-size: 8px; color: var(--mist); min-width: 0; }
 .redrow canvas { width: 100%; max-width: 56px; aspect-ratio: 1; image-rendering: pixelated; }
 .note { font-size: 13px; color: var(--mist); margin: 0; }
+.reroll { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.reroll[hidden] { display: none; }
+.reroll button { font-size: 11px; padding: 7px 11px; }
+.reroll .note { font-size: 12px; }
 a { color: var(--frost); }
 a.board { text-decoration: none; border-color: var(--cap); color: #fff; }
 a.board:hover { background: var(--cap-deep); }
@@ -306,6 +311,10 @@ a.board:hover { background: var(--cap-deep); }
       <section class="card" aria-labelledby="teamH">
         <h3 id="teamH"><span>Your team today</span><span id="teamDate"></span></h3>
         <div class="mons" id="team"><p class="note">Load your ROM to see today's six.</p></div>
+        <div class="reroll" id="reroll" hidden>
+          <button type="button" id="rerollBtn">New team</button>
+          <span class="note" id="rerollNote"></span>
+        </div>
       </section>
       <section class="card" aria-labelledby="redH">
         <h3 id="redH"><span>Red</span><span>Lv. 100 · original moves</span></h3>

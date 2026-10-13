@@ -1,54 +1,34 @@
-name: Record a Daily Red result
+name: Record Daily Red results
 
+# Every run records all open "Daily Red #" issues, so there is no title filter here:
+# a run that is skipped or cancelled while another waits is covered by the next one.
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
 
+# GitHub keeps one waiting run per group and cancels older waiting runs. That is fine,
+# because the run that is kept handles their issues too.
 concurrency:
   group: results-file
   cancel-in-progress: false
 
 jobs:
   record:
-    if: "startsWith(github.event.issue.title, 'Daily Red #')"
     runs-on: ubuntu-latest
     steps:
+      # the latest main, not the commit from when the issue was opened
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
-      - name: Add the result to results.txt
-        id: add
-        env:
-          ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_LOGIN: ${{ github.event.issue.user.login }}
-        run: node .github/scripts/record-result.js
-
-      - name: Commit results.txt
-        if: steps.add.outputs.ok == 'true'
-        env:
-          ISSUE_LOGIN: ${{ github.event.issue.user.login }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results.txt
-          git commit -m "Add Daily Red result from @${ISSUE_LOGIN} (#${ISSUE_NUMBER})"
-          git push
-
-      - name: Reply and close the issue
+      - name: Record open result issues
         uses: actions/github-script@v7
-        env:
-          OK: ${{ steps.add.outputs.ok }}
-          REASON: ${{ steps.add.outputs.reason }}
-          LINE: ${{ steps.add.outputs.line }}
         with:
           script: |
-            const ok = process.env.OK === 'true';
-            const body = ok
-              ? 'Recorded in results.txt:\n\n```text\n' + process.env.LINE + '\n```\n\nThanks for playing Daily Red!'
-              : 'This result was not recorded: ' + process.env.REASON;
-            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
-            await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, state: 'closed', state_reason: ok ? 'completed' : 'not_planned' });
+            const { run } = require('./.github/scripts/record-result.js');
+            await run({ github, context, exec, core });

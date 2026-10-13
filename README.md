@@ -12,10 +12,11 @@ A daily Pokémon Emerald challenge that runs in your browser. Every day you get 
 * You load your own copy of Pokémon Emerald (USA/Europe, game code BPEE). This repository contains no game data, and the ROM never leaves your browser. It is kept in the browser's storage so you only load it once.
 * When you press start, the page patches a copy of the ROM in memory: Red's trainer data and party, his script, and the Mt. Pyre summit, renamed MT. SILVER, with snow and no music. It then writes a save file that places you two steps below Red with today's team, and skips the title screen.
 * Today's team comes from the date, so everyone playing on the same day gets the same six Pokémon. Moves are chosen from level up, TM and HM, move tutor, egg moves and earlier evolutions, scored against Red's actual team.
+* Not happy with the six? Press **New team** under your team up to five times a day, before you start climbing. The team locks once your first battle of the day is finished. Rerolls come from the date too, so everyone's first reroll is the same team, and the number of rerolls you used is shown with your result.
 
 ## Results
 
-After your first finished battle each day, the game shows a button that opens a prefilled GitHub issue. Submitting that issue runs a GitHub Action that checks the result, adds one line to [results.txt](results.txt) and closes the issue with a reply. Only the first result per GitHub account per day is recorded. Results are on the honour system, and you need a free GitHub account to submit one.
+After your first finished battle each day, the game shows a button that opens a prefilled GitHub issue. Submitting that issue runs a GitHub Action that checks the result, adds one line to [results.txt](results.txt) and closes the issue with a reply. Each run handles every open result issue, oldest first, so results sent at the same moment are not lost. It can also be started by hand from the Actions tab. Only the first result per GitHub account per day is recorded. Results are on the honour system, and you need a free GitHub account to submit one.
 
 If you lose, the game puts you back at the start of the summit so you can practise. Only your first finished battle of the day counts.
 
